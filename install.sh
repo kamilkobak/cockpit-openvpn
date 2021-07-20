@@ -6,24 +6,14 @@ OPTDIR="/opt"
 CKPTDIR="share/cockpit"
 USRLOC="$USRDIR/$CKPTDIR/$NAME"
 OPTLOC="$OPTDIR/$NAME"
-DEBFOLDER="debian"
+EASY_RSA_VERSION="3.0.8"
+USR_DIR="/usr/share"
+EASY_RSA_DIR=${USR_DIR}"/easy-rsa"
+EASY_RSA_CMD=${EASY_RSA_DIR}"/easyrsa"
+EASY_RSA_TGZ_FILE="EasyRSA-"${EASY_RSA_VERSION}".tgz"
+EASY_RSA_URL="https://github.com/OpenVPN/easy-rsa/releases/download/v"${EASY_RSA_VERSION}"/"${EASY_RSA_TGZ_FILE}
 
-minify_install () {
-    echo "Installing and compiling files"
-    
-    which minify >/dev/null
-    if [ $? -ne 0 ]; then
-        echo "Minify not installed. Install minify first"
-        echo "e.g. by: sudo apt install minify"
-        exit
-    fi
-    
-    minify -r -o ".$USRLOC" --match="\.js" $NAME
-    #minify -r -o ".$USRLOC" --match="\.css" $NAME
-    #minify -r -o ".$USRLOC" --match="\.html" $NAME
-    cp "$NAME/openvpn.html" ".$USRLOC/"
-    cp "$NAME/manifest.json" ".$USRLOC/"
-}
+
 
 if [ "$EUID" -ne 0 ]
 then
@@ -49,35 +39,38 @@ then
 	echo "  <no argument>: install $NAME"
 	echo "  -u/ -U       : uninstall $NAME"
 	echo "  -h/ -H       : this help file"
-	echo "  -d/ -D       : build debian package"
-	echo "  -c/ -C       : Cleanup compiled files in install folder"
-elif [ "$1" == "-c" ] || [ "$1" == "-C" ]
-then
-	echo "$LNAME Deleting compiled files in install folder"
-	rm -f ".$USRLOC"/*
-	rm -f ./*.deb
-	rm -rf "$DEBFOLDER"/$LNAME
-	rm -rf "$DEBFOLDER"/.debhelper
-	rm -f "$DEBFOLDER"/files
-	rm -f "$DEBFOLDER"/files.new
-	rm -f "$DEBFOLDER"/$LNAME.*
-elif [ "$1" == "-d" ] || [ "$1" == "-D" ]
-then
-	echo "$LNAME build debian package"
-	minify_install
-	fakeroot debian/rules clean binary
-	mv ../*.deb .
 else
-	echo "$LNAME install script"
-    minify_install
+    echo "$LNAME install script"
+
+    apt install openvpn -y
     
     if [ ! -d "$USRLOC" ]; then
         mkdir "$USRLOC"
     fi
-    cp -r ".$USRLOC/." "$USRLOC/"
-	
+    cp -r "$NAME/." "$USRLOC/"
+
     if [ ! -d "$OPTLOC" ]; then
         mkdir "$OPTLOC"
     fi
-    cp -r ".$OPTLOC/." "$OPTLOC/"
+    cp -r "./$OPTDIR/." "$OPTDIR/"
+
+    echo
+    echo "Plugin Installation complete"
+    echo
+
+   #EasyRSA Instalation
+   if [ ! -d "${EASY_RSA_DIR}" ]; then
+    echo Downloading ${EASY_RSA_URL} ...
+    wget ${EASY_RSA_URL}
+
+    echo Extracting ${EASY_RSA_TGZ_FILE} to ${EASY_RSA_DIR}
+    tar -zxf ${EASY_RSA_TGZ_FILE}
+
+    mv "EasyRSA-"${EASY_RSA_VERSION} ${EASY_RSA_DIR}
+    rm ${EASY_RSA_TGZ_FILE}
+   else
+    echo ${EASY_RSA_DIR} already exists
+   fi
+
 fi
+

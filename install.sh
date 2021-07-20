@@ -42,8 +42,24 @@ then
 else
     echo "$LNAME install script"
 
+    #OpenVPN instalation
     apt install openvpn -y
-    
+
+    #EasyRSA Instalation
+    if [ ! -d "${EASY_RSA_DIR}" ]; then
+     echo Downloading ${EASY_RSA_URL} ...
+     wget ${EASY_RSA_URL}
+
+     echo Extracting ${EASY_RSA_TGZ_FILE} to ${EASY_RSA_DIR}
+     tar -zxf ${EASY_RSA_TGZ_FILE}
+
+     mv "EasyRSA-"${EASY_RSA_VERSION} ${EASY_RSA_DIR}
+     rm ${EASY_RSA_TGZ_FILE}
+    else
+     echo ${EASY_RSA_DIR} already exists
+    fi
+
+    #Plugin instalation
     if [ ! -d "$USRLOC" ]; then
         mkdir "$USRLOC"
     fi
@@ -54,23 +70,15 @@ else
     fi
     cp -r "./$OPTDIR/." "$OPTDIR/"
 
+    #Plugin activation
+    echo setup certificates ...
+    $OPTLOC/openvpn-cli.py setup_cert
+
     echo
     echo "Plugin Installation complete"
     echo
 
-   #EasyRSA Instalation
-   if [ ! -d "${EASY_RSA_DIR}" ]; then
-    echo Downloading ${EASY_RSA_URL} ...
-    wget ${EASY_RSA_URL}
 
-    echo Extracting ${EASY_RSA_TGZ_FILE} to ${EASY_RSA_DIR}
-    tar -zxf ${EASY_RSA_TGZ_FILE}
-
-    mv "EasyRSA-"${EASY_RSA_VERSION} ${EASY_RSA_DIR}
-    rm ${EASY_RSA_TGZ_FILE}
-   else
-    echo ${EASY_RSA_DIR} already exists
-   fi
 
 fi
 
